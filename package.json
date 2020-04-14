@@ -1,0 +1,14 @@
+{
+  "name": "life",
+  "version": "0.0.0",
+  "description": "static site for game of life",
+  "homepage": "https://github.com/animate-object/life",
+  "scripts": {
+    "publishSite": "gh-pages -d public"
+  },
+  "author": "alex prinsen",
+  "license": "WTFPL",
+  "devDependencies": {
+    "gh-pages": "^2.2.0"
+  }
+}
