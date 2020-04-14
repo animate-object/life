@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      table {
+        border: 1px solid black;
+
+        border-collapse: collapse;
+      }
+
+      #root {
+        height: 98vh;
+        width: 98vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      tr,
+      td {
+        border: 1px solid black;
+      }
+
+      td.live {
+        background-color: #222222;
+      }
+
+      td {
+        transition: background-color ease 100ms;
+      }
+
+      td:not(.live):hover {
+        background-color: #ababab;
+      }
+
+      td.live:hover {
+        background-color: #111111;
+      }
+
+      #info-panel {
+        position: fixed;
+        bottom: 2vh;
+        left: 2vw;
+
+        width: 30rem;
+        height: 14rem;
+
+        overflow: hidden;
+
+        background-color: white;
+        border: 1px solid black;
+        border-radius: 4px;
+        padding: 1rem;
+        box-sizing: border-box;
+        opacity: 0.925;
+        font-family: "Courier New", Courier, monospace;
+        transition: width ease 500ms, height ease 500ms,
+          background-color ease-in 500ms;
+      }
+
+      #info-panel.closed {
+        width: 0.5rem;
+        height: 0.5rem;
+      }
+
+      #info-panel.closed:hover {
+        background-color: #cccccc;
+      }
+
+      #info-panel.closed:active {
+        background-color: #aaaaaa;
+      }
+
+      #info-panel.closed > * {
+        display: none;
+      }
+
+      .title {
+        font-weight: bold;
+        font-size: 1.2rem;
+      }
+
+      .controls {
+        padding-left: 1rem;
+      }
+
+      #close {
+        user-select: none;
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        border: 1px solid black;
+        border-radius: 2px;
+        padding: 0.125rem 0.25rem;
+        transition: background-color ease-in 500ms;
+        background-color: white;
+      }
+
+      #close:hover {
+        background-color: #cccccc;
+      }
+
+      #close:active {
+        background-color: #aaaaaa;
+      }
+
+      #generations {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: none;
+      }
+
+      #state {
+        font-weight: bold;
+      }
+
+      #state.on {
+        color: green;
+      }
+      #state:not(.on) {
+        color: orange;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="info-panel" onclick="openIfClosed()">
+      <div class="title">Game of Life Simulator</div>
+      <div>
+        In memory of
+        <a href="https://en.wikipedia.org/wiki/John_Horton_Conway"
+          >John Conway</a
+        >
+        (1939-2020)
+      </div>
+      <br />
+      <div>
+        <div id="close" onclick="closePanel(event)">&lt;</div>
+        <div id="generations">
+          Generations: 0
+        </div>
+        <div>State: <span id="state">PAUSED</span></div>
+        <div>
+          Controls:
+          <div class="controls">
+            <div>play-pause: [spacebar]</div>
+            <div>advance one: [enter]</div>
+            <div>reset: [delete]</div>
+            <div>click/tap to activate tiles</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let intervalId;
+
+      const init = () => {
+        const root = document.getElementById("root");
+
+        const { sideLength, dimensionsInSquares } = sizeGrid(50);
+
+        grid_ = grid(sizeGrid(50).dimensionsInSquares);
+        drawGrid(grid_, sideLength, root);
+        setGridStyles(grid_, root);
+        addAllClickListeners(grid_, root);
+
+        return grid_;
+      };
+
+      const sizeGrid = (
+        minSize,
+        { width, height } = document
+          .getElementById("root")
+          .getBoundingClientRect()
+      ) => {
+        sideLength = Math.min(width, height) / minSize;
+        return {
+          sideLength,
+          dimensionsInSquares: {
+            width: Math.floor(width / sideLength),
+            height: Math.floor(height / sideLength),
+          },
+        };
+      };
+
+      updateGenerations = (grid_) => {
+        document.getElementById("generations").textContent =
+          "Generations: " + grid_.gen;
+      };
+
+      updateGameState = (on) => {
+        const stateEl = document.getElementById("state");
+        if (on) {
+          stateEl.classList.add("on");
+        } else {
+          stateEl.classList.remove("on");
+        }
+
+        stateEl.textContent = on ? "PLAYING" : "PAUSED";
+      };
+
+      closePanel = (evt) => {
+        evt.stopPropagation();
+        document.getElementById("info-panel").classList.add("closed");
+      };
+
+      openIfClosed = () => {
+        document.getElementById("info-panel").classList.remove("closed");
+      };
+
+      main = () => {
+        gameGrid = init();
+        window.addEventListener("keydown", (evt) => {
+          if (evt.key === " ") {
+            if (intervalId == null) {
+              updateGameState(true);
+              intervalId = setInterval(() => {
+                tick(gameGrid);
+                updateGenerations(gameGrid);
+                setGridStyles(gameGrid, document.getElementById("root"));
+              }, 400);
+            } else {
+              updateGameState(false);
+              clearInterval(intervalId);
+              intervalId = undefined;
+            }
+          } else if (evt.key === "Enter") {
+            tick(gameGrid);
+            updateGenerations(gameGrid);
+            setGridStyles(gameGrid, document.getElementById("root"));
+          } else if (evt.key === "Delete") {
+            clear(gameGrid);
+            setGridStyles(gameGrid, document.getElementById("root"));
+            updateGenerations(gameGrid);
+          }
+        });
+      };
+    </script>
+    <script src="/grid.js" onLoad="main()"></script>
+  </body>
+</html>
